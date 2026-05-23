@@ -1,3 +1,4 @@
+![Climax](Climax.png)
 # Climax
 # **序章：混沌の海**
 世界はまだ形を持たず、  
