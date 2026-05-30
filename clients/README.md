@@ -238,3 +238,12 @@ Example:
 ./clients/ctmcmd build -- cargo build
 ./clients/ctmcmd test  -- cargo test
 ```
+
+## Setup (no copy-paste)
+
+Create/update `clients/.env` automatically (fetches the Function key via Azure CLI):
+
+```bash
+./clients/setup_clients_env.sh
+set -a; . clients/.env; set +a
+```
