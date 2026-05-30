@@ -1,0 +1,28 @@
+# OS
+.DS_Store
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Local env files (never commit secrets)
+.env
+**/.env
+
+# Azure Functions local settings (local only)
+**/local.settings.json
+
+# Data / runtime artifacts
+**/.data/
+
+# Local backups created during submodule conversion
+*.bak.*
+functions-climax.bak.*/
+zellij.bak.*/
