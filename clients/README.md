@@ -223,3 +223,18 @@ set +a
 # custom server id (optional)
 CLIMAX_SERVER_ID=ubuntu-01 ./clients/climax-cmdlog --session-id unity-dev --topic test -- cargo test
 ```
+
+## `ctmcmd`
+
+Convenience wrapper for command-unit logging from inside tmux.
+
+- Infers `session_id` from the current tmux session name (`cmd-<name>` -> `<name>`).
+- Sends stdout/stderr + metadata to `POST /api/log/append` via `climax-cmdlog`.
+
+Example:
+
+```bash
+# inside: ./clients/ctm cmd unity-dev
+./clients/ctmcmd build -- cargo build
+./clients/ctmcmd test  -- cargo test
+```
