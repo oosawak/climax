@@ -202,3 +202,24 @@ Usage:
 ```
 
 This matches the workflow where you keep Codex, command execution, and log monitoring in separate tmux sessions.
+
+## `climax-cmdlog`
+
+Run a command and append its output to Chronicle via `POST /api/log/append`.
+
+- Default `server_id` is your hostname (override with `CLIMAX_SERVER_ID`).
+- Use `--topic` to group logs by purpose (build/test/deploy/etc.).
+
+Examples:
+
+```bash
+set -a
+. clients/.env
+set +a
+
+# run a command and store its stdout/stderr as one log item
+./clients/climax-cmdlog --session-id unity-dev --topic build -- cargo build
+
+# custom server id (optional)
+CLIMAX_SERVER_ID=ubuntu-01 ./clients/climax-cmdlog --session-id unity-dev --topic test -- cargo test
+```
