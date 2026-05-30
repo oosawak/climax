@@ -4,25 +4,23 @@ set -euo pipefail
 usage() {
   cat <<'MSG'
 Usage:
-  climax-tmux-start [--name <sessionName>] [--workspace <dir>] [--no-log] [--no-cmd]
+  ctm                # pick a workspace dir, attach to codex-<name>
+  ctm <name>         # create/reuse sessions, attach to codex-<name>
+  ctm cmd <name>     # attach to cmd-<name>
+  ctm log <name>     # attach to log-<name>
 
-Creates (or reuses) three tmux sessions for a given workspace directory:
+Options:
+  --workspace <dir>  (default: ~/Workspace)
+  --no-cmd           do not create cmd-<name>
+  --no-log           do not create log-<name>
 
-- codex-<name> : runs `codex sh` in ~/Workspace/<name>
-- cmd-<name>   : a plain shell in ~/Workspace/<name>
-- log-<name>   : reserved for log tail/senders (starts a shell)
-
-Defaults:
-- workspace: ~/Workspace
-- name: prompted from directories under workspace
-
-Notes:
-- This script does not require pane splits.
-- Start it from any terminal; it will attach you to codex-<name>.
+Creates (or reuses) three tmux sessions per workspace directory:
+  - codex-<name>: runs `codex sh` in <workspace>/<name>
+  - cmd-<name>:   shell in <workspace>/<name>
+  - log-<name>:   shell in <workspace>/<name> (reserved for log tail/senders)
 MSG
 }
 
-name=""
 workspace="$HOME/Workspace"
 with_cmd=1
 with_log=1
@@ -30,11 +28,11 @@ with_log=1
 while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help) usage; exit 0 ;;
-    --name) name="$2"; shift 2 ;;
     --workspace) workspace="$2"; shift 2 ;;
     --no-cmd) with_cmd=0; shift 1 ;;
     --no-log) with_log=0; shift 1 ;;
-    *) echo "Unknown arg: $1" >&2; usage >&2; exit 2 ;;
+    --) shift; break ;;
+    *) break ;;
   esac
 done
 
@@ -49,7 +47,7 @@ if [ ! -d "$workspace" ]; then
   exit 1
 fi
 
-choose_name() {
+pick_name() {
   local d
   echo "Select a workspace directory under: $workspace" >&2
   local i=1
@@ -76,12 +74,29 @@ choose_name() {
     echo "Out of range." >&2
     exit 1
   fi
-  name="${names[$((sel-1))]}"
+  echo "${names[$((sel-1))]}"
 }
 
-if [ -z "$name" ]; then
-  choose_name
-fi
+subcmd=""
+name=""
+
+case "${1:-}" in
+  cmd|log)
+    subcmd="$1"
+    name="${2:-}"
+    if [ -z "$name" ]; then
+      echo "Missing name for: $subcmd" >&2
+      usage >&2
+      exit 2
+    fi
+    ;;
+  "")
+    name="$(pick_name)"
+    ;;
+  *)
+    name="$1"
+    ;;
+esac
 
 workdir="$workspace/$name"
 if [ ! -d "$workdir" ]; then
@@ -93,19 +108,17 @@ codex_sess="codex-$name"
 cmd_sess="cmd-$name"
 log_sess="log-$name"
 
-# codex session
+# Ensure codex session exists (always)
 if ! tmux has-session -t "$codex_sess" 2>/dev/null; then
   tmux new-session -d -s "$codex_sess" -c "$workdir" "codex sh"
 fi
 
-# cmd session
 if [ $with_cmd -eq 1 ]; then
   if ! tmux has-session -t "$cmd_sess" 2>/dev/null; then
     tmux new-session -d -s "$cmd_sess" -c "$workdir"
   fi
 fi
 
-# log session (shell placeholder; wire up senders later)
 if [ $with_log -eq 1 ]; then
   if ! tmux has-session -t "$log_sess" 2>/dev/null; then
     tmux new-session -d -s "$log_sess" -c "$workdir"
@@ -113,4 +126,14 @@ if [ $with_log -eq 1 ]; then
   fi
 fi
 
-exec tmux attach -t "$codex_sess"
+case "$subcmd" in
+  cmd)
+    exec tmux attach -t "$cmd_sess"
+    ;;
+  log)
+    exec tmux attach -t "$log_sess"
+    ;;
+  *)
+    exec tmux attach -t "$codex_sess"
+    ;;
+esac

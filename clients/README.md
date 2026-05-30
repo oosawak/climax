@@ -167,19 +167,31 @@ For ongoing development and deployment of the Azure Functions + infra template, 
 
 Avoid working from `/tmp/...` because it may be wiped and is not meant for persistent checkouts.
 
-## `climax-tmux-start`
+## `ctm`
 
-Start (or reuse) tmux sessions per workspace directory:
+Start (or reuse) tmux sessions per workspace directory.
+
+Sessions:
 
 - `codex-<name>`: runs `codex sh`
 - `cmd-<name>`: shell for commands
 - `log-<name>`: shell reserved for log tail/senders
 
-```bash
-./clients/climax-tmux-start
+Usage:
 
-# or specify explicitly
-./clients/climax-tmux-start --name unity-dev --workspace ~/Workspace
+```bash
+# choose from ~/Workspace (number prompt)
+./clients/ctm
+
+# start/attach by name (開始/復帰)
+./clients/ctm <name>
+
+# attach to cmd or log sessions
+./clients/ctm cmd <name>
+./clients/ctm log <name>
+
+# custom workspace root
+./clients/ctm --workspace ~/Workspace <name>
 ```
 
 This matches the workflow where you keep Codex, command execution, and log monitoring in separate tmux sessions.
