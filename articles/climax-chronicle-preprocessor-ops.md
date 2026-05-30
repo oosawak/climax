@@ -166,3 +166,85 @@ unknown intent のときは、いきなり作業を進めず:
 - Azure AI Language（CLU）で intent/entities を抽出
 - UIなしでも Authoring API でプロジェクト作成→train→deploy できる
 - Codex には `final_prompt` を渡す（固定ファイル保存でコピペ無し運用も可能）
+
+---
+
+## なぜ CLU の学習データ（utterances）が必要なのか
+
+Climax Chronicle の前処理は、ユーザーの日本語コマンドをそのまま LLM に投げず、
+Azure AI Language（Conversation / CLU）で
+
+- intent（何をしたいか）
+- entities（対象やパラメータ：セッション名、検索語、ファイルパスなど）
+
+を抽出してから、英語プロンプト（`english_prompt`）→最終プロンプト（`final_prompt`）を作る。
+
+ここで重要なのは、CLU は「辞書」ではなく **プロジェクトに定義した intent/entity を学習して推定する**仕組みだという点。
+つまり intent を増やしたい場合は、その intent に対応する「例文（utterances）」が必要になる。
+
+学習データが少ない（または無い）と、運用上はだいたい次のどれかが起きる。
+
+- intent が `unknown` に寄りやすい（分類できない）
+- entity が抽出できない（`session` が空になる等）
+- entity が「文末語込み」で抽出される（例: `unity-devを開いて` が丸ごと `session` になる）
+- 表現ゆれ（「探して」「検索して」「見つけて」など）に弱い
+
+だからこそ、最初に「最小の学習データ」を用意し、使いながら増やしていく運用が現実的。
+
+## 何を学習させるべきか（最小セット）
+
+開発で効く順に、まずは intent を少数に絞るのがおすすめ。
+
+例:
+
+- `continue_previous_task`
+- `summarize_logs`
+- `open_unity_session`
+- `search_in_repo`
+- `open_file`
+- `run_checks`
+- `summarize_diff`
+- `unknown`
+
+entity はまずこれだけで十分。
+
+- `session`（例: `unity-dev`）
+- `query`（例: `intent_processor.py`）
+- `path`（例: `api/chronicle-functions-python/function_app.py`）
+
+## Language Studio が使えない環境での運用
+
+Language Studio（Web UI）が使えなくても、Authoring API で
+
+- import（プロジェクト作成/更新）
+- train（学習）
+- deploy（デプロイ）
+
+を自動化できる。
+
+このリポジトリでは、Authoring API の呼び出しを `provision_clu_and_configure_functions.sh` にまとめている。
+
+- intent/entity 定義
+- utterances（例文）
+- train / deploy
+
+までを一括で実行する。
+
+## 注意: entity の offset/length について
+
+Conversation/CLU の学習データでは、entity を「どの部分か」指定するために `offset` / `length` を使う。
+
+このリポジトリのスクリプトは `Utf16CodeUnit` 前提なので、日本語が混ざると数え方がズレやすい。
+そのため、まずは `unity-dev` のような ASCII 文字列を entity 例にして、ラベル付けが壊れにくい形から始めるのがおすすめ。
+
+それでも抽出結果が「文末語込み」になる場合があるため、サーバー側で `entities.session` などを正規化して実用性を担保している。
+
+## 学習データは「固定」ではなく「運用で増やす」
+
+学習データは一度作って終わりではなく、実際に使ってみて
+
+- `unknown` が多い
+- entity が抜ける
+- 表現ゆれに弱い
+
+が見えてきた時に utterance を少しずつ足して再 train/deploy するのが一番コスパが良い。
