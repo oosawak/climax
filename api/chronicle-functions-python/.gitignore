@@ -1,0 +1,12 @@
+# Azure Functions local settings
+local.settings.json
+
+# Python venv
+.venv/
+
+# Local storage
+.data/
+
+# Python cache
+__pycache__/
+*.pyc
