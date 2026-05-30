@@ -166,3 +166,20 @@ For ongoing development and deployment of the Azure Functions + infra template, 
 - `~/Workspace/climax/functions-climax`
 
 Avoid working from `/tmp/...` because it may be wiped and is not meant for persistent checkouts.
+
+## `climax-tmux-start`
+
+Start (or reuse) tmux sessions per workspace directory:
+
+- `codex-<name>`: runs `codex sh`
+- `cmd-<name>`: shell for commands
+- `log-<name>`: shell reserved for log tail/senders
+
+```bash
+./clients/climax-tmux-start
+
+# or specify explicitly
+./clients/climax-tmux-start --name unity-dev --workspace ~/Workspace
+```
+
+This matches the workflow where you keep Codex, command execution, and log monitoring in separate tmux sessions.

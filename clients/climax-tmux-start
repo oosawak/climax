@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'MSG'
+Usage:
+  climax-tmux-start [--name <sessionName>] [--workspace <dir>] [--no-log] [--no-cmd]
+
+Creates (or reuses) three tmux sessions for a given workspace directory:
+
+- codex-<name> : runs `codex sh` in ~/Workspace/<name>
+- cmd-<name>   : a plain shell in ~/Workspace/<name>
+- log-<name>   : reserved for log tail/senders (starts a shell)
+
+Defaults:
+- workspace: ~/Workspace
+- name: prompted from directories under workspace
+
+Notes:
+- This script does not require pane splits.
+- Start it from any terminal; it will attach you to codex-<name>.
+MSG
+}
+
+name=""
+workspace="$HOME/Workspace"
+with_cmd=1
+with_log=1
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) usage; exit 0 ;;
+    --name) name="$2"; shift 2 ;;
+    --workspace) workspace="$2"; shift 2 ;;
+    --no-cmd) with_cmd=0; shift 1 ;;
+    --no-log) with_log=0; shift 1 ;;
+    *) echo "Unknown arg: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+if ! command -v tmux >/dev/null 2>&1; then
+  echo "Missing tmux." >&2
+  exit 1
+fi
+
+workspace="${workspace%/}"
+if [ ! -d "$workspace" ]; then
+  echo "Workspace not found: $workspace" >&2
+  exit 1
+fi
+
+choose_name() {
+  local d
+  echo "Select a workspace directory under: $workspace" >&2
+  local i=1
+  local -a names=()
+  while IFS= read -r d; do
+    d="$(basename "$d")"
+    names+=("$d")
+    printf '%2d) %s\n' "$i" "$d" >&2
+    i=$((i+1))
+  done < <(find "$workspace" -maxdepth 1 -mindepth 1 -type d -printf '%p\n' | sort)
+
+  if [ ${#names[@]} -eq 0 ]; then
+    echo "No directories found under $workspace" >&2
+    exit 1
+  fi
+
+  local sel
+  read -r -p "Enter number: " sel >&2
+  if ! [[ "$sel" =~ ^[0-9]+$ ]]; then
+    echo "Invalid selection." >&2
+    exit 1
+  fi
+  if [ "$sel" -lt 1 ] || [ "$sel" -gt ${#names[@]} ]; then
+    echo "Out of range." >&2
+    exit 1
+  fi
+  name="${names[$((sel-1))]}"
+}
+
+if [ -z "$name" ]; then
+  choose_name
+fi
+
+workdir="$workspace/$name"
+if [ ! -d "$workdir" ]; then
+  echo "Workspace dir not found: $workdir" >&2
+  exit 1
+fi
+
+codex_sess="codex-$name"
+cmd_sess="cmd-$name"
+log_sess="log-$name"
+
+# codex session
+if ! tmux has-session -t "$codex_sess" 2>/dev/null; then
+  tmux new-session -d -s "$codex_sess" -c "$workdir" "codex sh"
+fi
+
+# cmd session
+if [ $with_cmd -eq 1 ]; then
+  if ! tmux has-session -t "$cmd_sess" 2>/dev/null; then
+    tmux new-session -d -s "$cmd_sess" -c "$workdir"
+  fi
+fi
+
+# log session (shell placeholder; wire up senders later)
+if [ $with_log -eq 1 ]; then
+  if ! tmux has-session -t "$log_sess" 2>/dev/null; then
+    tmux new-session -d -s "$log_sess" -c "$workdir"
+    tmux send-keys -t "$log_sess" "echo 'log session: add tail/senders here'" Enter
+  fi
+fi
+
+exec tmux attach -t "$codex_sess"
