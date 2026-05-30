@@ -1,0 +1,3 @@
+[submodule "functions-climax"]
+	path = functions-climax
+	url = https://github.com/oosawak/functions-climax.git
