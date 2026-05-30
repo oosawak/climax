@@ -26,3 +26,10 @@ venv/
 *.bak.*
 functions-climax.bak.*/
 zellij.bak.*/
+
+# Local workspaces (not tracked)
+codex_preprocessor_workspace/
+smallcode_preprocessor_workspace/
+
+# Unused/experimental local CLI dir
+05_ClimaxCli/climaxcli/
