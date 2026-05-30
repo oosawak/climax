@@ -4,15 +4,18 @@ set -euo pipefail
 usage() {
   cat <<'MSG'
 Usage:
-  ctm                # pick a workspace dir, attach to codex-<name>
-  ctm <name>         # create/reuse sessions, attach to codex-<name>
-  ctm cmd <name>     # attach to cmd-<name>
-  ctm log <name>     # attach to log-<name>
+  ctm                  # pick a workspace dir, attach to codex-<name>
+  ctm <name>           # create/reuse sessions, attach to codex-<name>
+  ctm cmd <name>       # attach to cmd-<name>
+  ctm log <name>       # attach to log-<name>
+  ctm stop <name>      # kill cmd-<name> and log-<name>
+  ctm stop --all <name># kill codex/cmd/log sessions
 
 Options:
-  --workspace <dir>  (default: ~/Workspace)
-  --no-cmd           do not create cmd-<name>
-  --no-log           do not create log-<name>
+  --workspace <dir>    (default: ~/Workspace)
+  --no-cmd             do not create cmd-<name>
+  --no-log             do not create log-<name>
+  --cleanup            after codex session ends, kill cmd/log sessions
 
 Creates (or reuses) three tmux sessions per workspace directory:
   - codex-<name>: runs `codex sh` in <workspace>/<name>
@@ -24,6 +27,8 @@ MSG
 workspace="$HOME/Workspace"
 with_cmd=1
 with_log=1
+cleanup=0
+stop_all=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -31,6 +36,8 @@ while [ $# -gt 0 ]; do
     --workspace) workspace="$2"; shift 2 ;;
     --no-cmd) with_cmd=0; shift 1 ;;
     --no-log) with_log=0; shift 1 ;;
+    --cleanup) cleanup=1; shift 1 ;;
+    --all) stop_all=1; shift 1 ;;
     --) shift; break ;;
     *) break ;;
   esac
@@ -81,7 +88,7 @@ subcmd=""
 name=""
 
 case "${1:-}" in
-  cmd|log)
+  cmd|log|stop)
     subcmd="$1"
     name="${2:-}"
     if [ -z "$name" ]; then
@@ -98,15 +105,30 @@ case "${1:-}" in
     ;;
 esac
 
+codex_sess="codex-$name"
+cmd_sess="cmd-$name"
+log_sess="log-$name"
+
+if [ "$subcmd" = "stop" ]; then
+  if tmux has-session -t "$cmd_sess" 2>/dev/null; then
+    tmux kill-session -t "$cmd_sess"
+  fi
+  if tmux has-session -t "$log_sess" 2>/dev/null; then
+    tmux kill-session -t "$log_sess"
+  fi
+  if [ $stop_all -eq 1 ]; then
+    if tmux has-session -t "$codex_sess" 2>/dev/null; then
+      tmux kill-session -t "$codex_sess"
+    fi
+  fi
+  exit 0
+fi
+
 workdir="$workspace/$name"
 if [ ! -d "$workdir" ]; then
   echo "Workspace dir not found: $workdir" >&2
   exit 1
 fi
-
-codex_sess="codex-$name"
-cmd_sess="cmd-$name"
-log_sess="log-$name"
 
 # Ensure codex session exists (always)
 if ! tmux has-session -t "$codex_sess" 2>/dev/null; then
@@ -134,6 +156,15 @@ case "$subcmd" in
     exec tmux attach -t "$log_sess"
     ;;
   *)
-    exec tmux attach -t "$codex_sess"
+    tmux attach -t "$codex_sess"
+    if [ $cleanup -eq 1 ]; then
+      if tmux has-session -t "$cmd_sess" 2>/dev/null; then
+        tmux kill-session -t "$cmd_sess"
+      fi
+      if tmux has-session -t "$log_sess" 2>/dev/null; then
+        tmux kill-session -t "$log_sess"
+      fi
+    fi
     ;;
 esac
+

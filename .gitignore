@@ -33,3 +33,6 @@ smallcode_preprocessor_workspace/
 
 # Unused/experimental local CLI dir
 05_ClimaxCli/climaxcli/
+
+# Local scratch scripts
+clients/gtm

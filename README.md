@@ -1,5 +1,29 @@
 ![Climax](Climax.png)
 # Climax
+
+## クイックスタート（チーム向け）
+
+1) clients/.env.example を clients/.env にコピーして、配布された Function key を入れる:
+
+    cp clients/.env.example clients/.env
+    # clients/.env を編集して CLIMAX_FUNCTIONS_CODE="<配布された function key>"
+
+2) 日本語コマンド → final_prompt を作る（ローカル保存）:
+
+    ./clients/climax-nlp "unity-devの続きやって"
+    cat ~/.climax/latest_final_prompt.txt
+
+3) tmux 運用（Codex/コマンド/ログを別セッション）:
+
+    ./clients/ctm <name>
+    ./clients/ctm cmd <name>
+    ./clients/ctm log <name>
+
+    # 後片付け
+    ./clients/ctm stop <name>
+    ./clients/ctm --cleanup <name>
+
+---
 # **序章：混沌の海**
 世界はまだ形を持たず、  
 コードとデータが渦巻く混沌の海だった。

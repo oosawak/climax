@@ -190,6 +190,13 @@ Usage:
 ./clients/ctm cmd <name>
 ./clients/ctm log <name>
 
+# stop helper sessions (cleanup)
+./clients/ctm stop <name>
+./clients/ctm stop --all <name>
+
+# auto-clean cmd/log after you exit Codex
+./clients/ctm --cleanup <name>
+
 # custom workspace root
 ./clients/ctm --workspace ~/Workspace <name>
 ```
