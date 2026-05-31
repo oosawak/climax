@@ -155,7 +155,14 @@ def log_append(req: func.HttpRequest) -> func.HttpResponse:
         storage = get_storage()
         payload = _parse_json(req)
         item = LogAppend.from_payload(payload)
-        saved = storage.append_log(item)
+        extra: dict[str, Any] | None = None
+        annotate = (os.getenv("CHRONICLE_ANNOTATE_LOGS") or "").strip().lower() in {"1", "true", "yes"}
+        if annotate:
+            src = (item.command or item.log).strip()
+            if src:
+                nlp = analyze_command(src)
+                extra = {"nlp": nlp.to_payload()}
+        saved = storage.append_log(item, extra=extra)
         return _json_response({"ok": True, "item": saved})
     except Exception as e:
         return _json_response(_debug_error_payload(e), status=500)

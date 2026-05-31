@@ -15,7 +15,7 @@ class ChronicleStorage:
     def upsert_session(self, update: SessionUpdate) -> dict[str, Any]:
         raise NotImplementedError
 
-    def append_log(self, item: LogAppend) -> dict[str, Any]:
+    def append_log(self, item: LogAppend, *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         raise NotImplementedError
 
     def get_session(self, server_id: str, session_id: str) -> dict[str, Any] | None:
@@ -57,10 +57,12 @@ class FileStorage(ChronicleStorage):
             "type": "session",
             **asdict(update),
         }
+        if extra:
+            record.update(extra)
         self._append(record)
         return record
 
-    def append_log(self, item: LogAppend) -> dict[str, Any]:
+    def append_log(self, item: LogAppend, *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         record = {
             "id": f"log-{item.server_id}-{item.session_id}-{item.timestamp}",
             "type": "log",
@@ -192,10 +194,12 @@ class CosmosStorage(ChronicleStorage):
             "pk": f"session:{update.server_id}",
             **asdict(update),
         }
+        if extra:
+            record.update(extra)
         self.container.upsert_item(record)
         return record
 
-    def append_log(self, item: LogAppend) -> dict[str, Any]:
+    def append_log(self, item: LogAppend, *, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         record = {
             "id": f"log-{item.server_id}-{item.session_id}-{item.timestamp}",
             "type": "log",
