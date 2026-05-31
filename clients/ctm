@@ -9,7 +9,7 @@ Usage:
   ctm cmd <name>       # attach to cmd-<name>
   ctm log <name>       # attach to log-<name>
   ctm stop <name>      # kill cmd-<name> and log-<name>
-  ctm stop --all <name># kill codex/cmd/log sessions
+  ctm --all stop <name># kill codex/cmd/log sessions
 
 Options:
   --workspace <dir>    (default: ~/Workspace)
