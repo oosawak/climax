@@ -137,13 +137,13 @@ fi
 
 if [ $with_cmd -eq 1 ]; then
   if ! tmux has-session -t "$cmd_sess" 2>/dev/null; then
-    tmux new-session -d -s "$cmd_sess" -c "$workdir"
+    tmux new-session -d -s "$cmd_sess" -c "$workdir" "bash -lc \"set -a; [ -f ~/Workspace/climax/clients/.env ] && . ~/Workspace/climax/clients/.env; set +a; exec bash\""
   fi
 fi
 
 if [ $with_log -eq 1 ]; then
   if ! tmux has-session -t "$log_sess" 2>/dev/null; then
-    tmux new-session -d -s "$log_sess" -c "$workdir"
+    tmux new-session -d -s "$log_sess" -c "$workdir" "bash -lc \"set -a; [ -f ~/Workspace/climax/clients/.env ] && . ~/Workspace/climax/clients/.env; set +a; exec bash\""
     tmux send-keys -t "$log_sess" "echo 'log session: add tail/senders here'" Enter
   fi
 fi

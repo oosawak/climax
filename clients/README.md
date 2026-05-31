@@ -171,6 +171,9 @@ Avoid working from `/tmp/...` because it may be wiped and is not meant for persi
 
 Start (or reuse) tmux sessions per workspace directory.
 
+Tip:
+- Newly created `cmd-<name>` / `log-<name>` sessions auto-source `~/Workspace/climax/clients/.env` (so `ctmcmd.py` can call Azure without manual `set -a`).
+
 Sessions:
 
 - `codex-<name>`: runs `codex sh`
