@@ -43,7 +43,13 @@
         <div class="row">
           <label class="label">session</label>
           <select id="sessionSelect" class="input mono"></select>
+          <div class="hint">一覧が空のときは、下の session_id を直接入力してください（"ctm sync" 未実行の可能性があります）</div>
         </div>
+        <div class="row">
+          <label class="label">session_id (manual)</label>
+          <input id="sessionIdManual" class="input mono" placeholder="unity-dev" />
+        </div>
+
         <div class="row">
           <button id="btnSessionGet" class="btn btn-ghost">session/get</button>
           <button id="btnStatus" class="btn btn-ghost">status</button>

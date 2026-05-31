@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 const apiBaseEl = $("apiBase");
 const serverIdEl = $("serverId");
 const sessionSelectEl = $("sessionSelect");
+const sessionIdManualEl = $("sessionIdManual");
 const topicEl = $("topic");
 const limitEl = $("limit");
 const outEl = $("out");
@@ -16,6 +17,12 @@ function setStatus(s) {
 }
 function setOut(s) {
   outEl.textContent = s;
+}
+
+function getSessionId() {
+  const fromSelect = (sessionSelectEl.value || "").trim();
+  if (fromSelect) return fromSelect;
+  return (sessionIdManualEl.value || "").trim();
 }
 
 function apiUrl(path, params = {}) {
@@ -85,7 +92,7 @@ async function loadSessions() {
 
 async function sessionGet() {
   const server_id = serverIdEl.value.trim();
-  const session_id = sessionSelectEl.value;
+  const session_id = getSessionId();
   if (!server_id || !session_id) return;
   setStatus("session/get...");
   const data = await fetchJson(apiUrl("session/get", { server_id, session_id }));
@@ -95,7 +102,7 @@ async function sessionGet() {
 
 async function loadLogsOnce() {
   const server_id = serverIdEl.value.trim();
-  const session_id = sessionSelectEl.value;
+  const session_id = getSessionId();
   if (!server_id || !session_id) return;
   const topic = topicEl.value.trim();
   const limit = parseInt(limitEl.value || "50", 10) || 50;
