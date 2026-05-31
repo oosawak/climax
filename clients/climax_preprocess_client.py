@@ -4,6 +4,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
+
+from _dotenv import load_dotenv
 import sys
 import urllib.error
 import urllib.parse
@@ -63,6 +66,7 @@ def _build_analyze_url(base_url: str, functions_code: str | None) -> str:
 
 
 def main() -> int:
+    load_dotenv(Path(__file__).resolve().parent / ".env")
     parser = argparse.ArgumentParser(
         description='Climax: Japanese command -> intent -> English prompt -> final prompt (Japanese response)',
     )

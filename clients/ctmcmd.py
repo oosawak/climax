@@ -11,6 +11,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from pathlib import Path
+
+from _dotenv import load_dotenv
+
 
 def _default_server_id() -> str:
     host = socket.gethostname().split(".")[0]
@@ -61,12 +65,13 @@ def _post_json(url: str, payload: dict) -> dict:
 
 
 def main() -> int:
+    load_dotenv(Path(__file__).resolve().parent / ".env")
     ap = argparse.ArgumentParser(description="Run a command and append its output to Chronicle (/api/log/append).")
     ap.add_argument("--functions-url", default=os.getenv("CLIMAX_FUNCTIONS_URL", "http://localhost:7071"))
     ap.add_argument("--functions-code", default=os.getenv("CLIMAX_FUNCTIONS_CODE"))
     ap.add_argument("--server-id", default=os.getenv("CLIMAX_SERVER_ID") or _default_server_id())
     ap.add_argument("--session-id", default=os.getenv("CLIMAX_SESSION_ID"))
-    ap.add_argument("--topic", required=True)
+    ap.add_argument("--topic", default=os.getenv("CLIMAX_TOPIC") or "default")
     ap.add_argument("--cwd", default=None)
     ap.add_argument("cmd", nargs=argparse.REMAINDER)
     args = ap.parse_args()

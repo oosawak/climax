@@ -169,6 +169,17 @@ unknown intent のときは、いきなり作業を進めず:
 
 ---
 
+## 動作環境メモ（ビット幅 / バージョン）
+
+「ローカルで動くか」の切り分けで迷いやすいので、検証時に見えていた前提をメモしておく。
+
+- Azure Functions Core Tools: 4.x（64-bit）
+- Python Worker: 3.12（Linux x64）
+- Functions Runtime: 4.x
+
+この前提が崩れている場合（例: Python 3.11、Core Tools が古い、ARM 環境など）は、同じ手順でも挙動が変わる可能性がある。
+
+
 ## なぜ CLU の学習データ（utterances）が必要なのか
 
 Climax Chronicle の前処理は、ユーザーの日本語コマンドをそのまま LLM に投げず、
