@@ -224,6 +224,15 @@ set +a
 CLIMAX_SERVER_ID=ubuntu-01 ./clients/climax-cmdlog --session-id unity-dev --topic test -- cargo test
 ```
 
+## `ctmcmd.py`
+
+Python implementation of command-unit logging (more reliable than editing bash scripts in some environments).
+
+```bash
+# recommended
+./clients/ctmcmd.py --topic build -- echo hello
+```
+
 ## `ctmcmd`
 
 Convenience wrapper for command-unit logging from inside tmux.
