@@ -41,7 +41,7 @@ function fmtLog(it) {
   const topic = it.topic ? ` [${it.topic}]` : "";
   const exit = (it.exit_code === 0 || it.exit_code) ? ` (exit=${it.exit_code})` : "";
   const cmd = it.command ? ` ${it.command}` : "";
-  const nlp = it.nlp && it.nlp.intent ? ` {nlp:${it.nlp.intent}${it.nlp.provider ? : + it.nlp.provider : }}` : "";
+  const nlp = it.nlp && it.nlp.intent ? ` {nlp:${it.nlp.intent}${it.nlp.provider ? ":" + it.nlp.provider : ""}}` : "";
   const head = `[${ts}]${topic}${exit}${cmd}${nlp}`.trim();
   const body = (it.log || "").trim();
   return `${head}\n${body}\n`;
