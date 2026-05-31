@@ -33,6 +33,7 @@
         </div>
         <div class="row">
           <button id="btnSessions" class="btn">Load sessions</button>
+          <button id="btnRecent" class="btn btn-ghost">Recent logs</button>
           <button id="btnHealth" class="btn btn-ghost">Health</button>
         </div>
         <pre id="authInfo" class="pre mono small"></pre>
@@ -40,6 +41,12 @@
 
       <section class="card">
         <h2>Session</h2>
+        <div class="row">
+          <label class="label">recent</label>
+          <select id="recentSelect" class="input mono"></select>
+          <div class="hint">Recent logs から server/session を選ぶと下の入力へ反映します</div>
+        </div>
+
         <div class="row">
           <label class="label">session</label>
           <select id="sessionSelect" class="input mono"></select>

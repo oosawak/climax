@@ -3,6 +3,7 @@ const $ = (id) => document.getElementById(id);
 const apiBaseEl = $("apiBase");
 const serverIdEl = $("serverId");
 const sessionSelectEl = $("sessionSelect");
+const recentSelectEl = $("recentSelect");
 const sessionIdManualEl = $("sessionIdManual");
 const topicEl = $("topic");
 const limitEl = $("limit");
@@ -90,6 +91,40 @@ async function loadSessions() {
   setOut(JSON.stringify(data, null, 2));
 }
 
+async function loadRecentLogs() {
+  const limit = parseInt(limitEl.value || "50", 10) || 50;
+  const topic = topicEl.value.trim();
+  setStatus("recent logs...");
+  const data = await fetchJson(apiUrl("logs/recent", { limit, topic: topic || undefined }));
+  const items = data.items || [];
+
+  // unique server/session pairs
+  const seen = new Set();
+  const pairs = [];
+  for (const it of items) {
+    const server_id = (it.server_id || "").trim();
+    const session_id = (it.session_id || "").trim();
+    if (!server_id || !session_id) continue;
+    const key = server_id + "::" + session_id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pairs.push({ server_id, session_id });
+  }
+
+  recentSelectEl.innerHTML = "";
+  for (const p of pairs) {
+    const opt = document.createElement("option");
+    opt.value = p.server_id + "::" + p.session_id;
+    opt.textContent = p.server_id + " / " + p.session_id;
+    recentSelectEl.appendChild(opt);
+  }
+
+  // show raw items in output (for debugging)
+  setOut(items.map(fmtLog).join("
+"));
+  setStatus("recent logs: " + items.length);
+}
+
 async function sessionGet() {
   const server_id = serverIdEl.value.trim();
   const session_id = getSessionId();
@@ -145,6 +180,14 @@ $("btnFollow").addEventListener("click", follow);
 $("btnStop").addEventListener("click", stopFollow);
 
 // init
+recentSelectEl.addEventListener("change", () => {
+  const v = (recentSelectEl.value || "").trim();
+  if (!v) return;
+  const [server_id, session_id] = v.split("::");
+  if (server_id) serverIdEl.value = server_id;
+  if (session_id) sessionIdManualEl.value = session_id;
+});
+
 serverIdEl.value = localStorage.getItem("chronicle.server_id") || "";
 apiBaseEl.value = localStorage.getItem("chronicle.api_base") || "";
 apiBaseEl.addEventListener("change", () => localStorage.setItem("chronicle.api_base", apiBaseEl.value));

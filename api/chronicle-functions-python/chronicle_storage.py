@@ -20,8 +20,10 @@ class ChronicleStorage:
 
     def get_session(self, server_id: str, session_id: str) -> dict[str, Any] | None:
         raise NotImplementedError
-
     def list_sessions(self) -> list[dict[str, Any]]:
+        raise NotImplementedError
+
+    def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
         raise NotImplementedError
 
     def list_logs(
@@ -106,6 +108,34 @@ class FileStorage(ChronicleStorage):
                 sessions[item["id"]] = item
         return sorted(sessions.values(), key=lambda x: x.get("updated_at", ""), reverse=True)
 
+    def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
+        if limit < 1:
+            return []
+        if limit > 2000:
+            limit = 2000
+        if not self.path.exists():
+            return []
+
+        items: list[dict[str, Any]] = []
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    item = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if item.get("type") != "log":
+                    continue
+                if topic and item.get("topic") != topic:
+                    continue
+                items.append(item)
+
+        items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return items[:limit]
+
+
     def list_logs(
         self,
         server_id: str,
@@ -174,6 +204,33 @@ class CosmosStorage(ChronicleStorage):
         }
         self.container.upsert_item(record)
         return record
+
+    def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
+        if limit < 1:
+            return []
+        if limit > 2000:
+            limit = 2000
+
+        where = ["c.type = \"log\""]
+        params: list[dict[str, Any]] = [{"name": "@limit", "value": limit}]
+        if topic:
+            where.append("c.topic = @topic")
+            params.append({"name": "@topic", "value": topic})
+
+        query = (
+            "SELECT TOP @limit * FROM c WHERE "
+            + " AND ".join(where)
+            + " ORDER BY c.timestamp DESC"
+        )
+
+        return list(
+            self.container.query_items(
+                query=query,
+                parameters=params,
+                enable_cross_partition_query=True,
+            )
+        )
+
 
     def get_session(self, server_id: str, session_id: str) -> dict[str, Any] | None:
         target_id = f"session-{server_id}-{session_id}"

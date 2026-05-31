@@ -119,13 +119,31 @@ def logs(req: func.HttpRequest) -> func.HttpResponse:
     try:
         storage = get_storage()
         items = storage.list_logs(
-        server_id=server_id,
-        session_id=session_id,
-        limit=limit or 200,
-        since=since,
-        until=until,
-        topic=topic,
-    )
+            server_id=server_id,
+            session_id=session_id,
+            limit=limit or 200,
+            since=since,
+            until=until,
+            topic=topic,
+        )
+        return _json_response({"ok": True, "items": items})
+    except Exception as e:
+        return _json_response(_debug_error_payload(e), status=500)
+
+
+
+
+@app.route(route="logs/recent", methods=["GET"])
+def logs_recent(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        limit = _optional_int_query(req, "limit")
+        topic = _optional_query(req, "topic")
+    except ValueError as e:
+        return _json_response({"ok": False, "error": str(e)}, status=400)
+
+    try:
+        storage = get_storage()
+        items = storage.list_recent_logs(limit=limit or 200, topic=topic)
         return _json_response({"ok": True, "items": items})
     except Exception as e:
         return _json_response(_debug_error_payload(e), status=500)
