@@ -175,7 +175,18 @@ GET  /api/artifacts       # GitHub アーティファクト情報
 
 ---
 
-# 6. GitHub Pages（UI）
+# 6. 管理画面（UI）
+- **個人/公開用（認証なし）**: GitHub Pages でもOK（簡易ビューア）
+- **チーム運用（認証あり）**: Azure Static Web Apps（SWA）を推奨（`/.auth` + AAD）
+
+SWA を使う場合：
+- App: `admin-web/`
+- API: `api/chronicle-functions-python/`（SWA 統合 Functions）
+- 認証: `admin-web/staticwebapp.config.json` で `authenticated` 必須
+- CI: `.github/workflows/azure-static-web-apps.yml`（token は repo secret に設定）
+
+（互換目的で GitHub Pages のUI要件は残すが、**運用の本命は SWA** とする）
+
 - セッション一覧
 - セッション詳細
 - ログビューア
@@ -199,7 +210,7 @@ GET  /api/artifacts       # GitHub アーティファクト情報
 3. **ログ送信の仕組みの実装**
 4. **Azure Functions の API 実装**
 5. **Cosmos DB の保存処理**
-6. **GitHub Pages の UI の基盤作成**
+6. **管理画面 UI（SWA / Pages）の基盤作成**
 
 ---
 

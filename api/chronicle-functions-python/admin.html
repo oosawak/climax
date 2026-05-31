@@ -1,0 +1,134 @@
+<!doctype html>
+<!-- LEGACY: key-based viewer. Prefer SWA UI in /admin-web with auth. -->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Climax Chronicle Admin</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; line-height: 1.35; }
+      header { display: flex; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+      input, select, button { font: inherit; padding: 6px 8px; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+      .card { border: 1px solid rgba(127,127,127,.35); border-radius: 10px; padding: 12px; margin: 10px 0; }
+      pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
+      small { opacity: .75; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2 style="margin:0">Climax Chronicle Admin</h2>
+      <small>function key はURLの <span class="mono">?code=...</span> を使います</small>
+    </header>
+
+    <div class="card">
+      <div class="row">
+        <label>server_id <input id="serverId" class="mono" size="16" placeholder="i9" /></label>
+        <button id="loadSessions">sessions</button>
+      </div>
+      <div class="row">
+        <label>session <select id="sessionSelect"></select></label>
+        <label>topic <input id="topic" class="mono" size="12" placeholder="build" /></label>
+        <label>limit <input id="limit" class="mono" size="6" value="50" /></label>
+        <button id="loadLogs">logs</button>
+        <button id="follow">follow</button>
+        <button id="stopFollow">stop</button>
+      </div>
+      <div class="row">
+        <small id="status"></small>
+      </div>
+    </div>
+
+    <div class="card">
+      <pre id="out" class="mono"></pre>
+    </div>
+
+    <script>
+      const qs = new URLSearchParams(location.search);
+      const code = qs.get("code") || "";
+      const api = (path, params={}) => {
+        const p = new URLSearchParams(params);
+        if (code && !p.has("code")) p.set("code", code);
+        return `${location.origin}/api/${path}?${p.toString()}`;
+      };
+
+      const serverIdEl = document.getElementById("serverId");
+      const sessionSelect = document.getElementById("sessionSelect");
+      const topicEl = document.getElementById("topic");
+      const limitEl = document.getElementById("limit");
+      const outEl = document.getElementById("out");
+      const statusEl = document.getElementById("status");
+
+      const setStatus = (s) => statusEl.textContent = s;
+      const setOut = (s) => outEl.textContent = s;
+      const fmtLog = (it) => {
+        const ts = it.timestamp || "";
+        const topic = it.topic ? ` [${it.topic}]` : "";
+        const exit = (it.exit_code === 0 || it.exit_code) ? ` (exit=${it.exit_code})` : "";
+        const cmd = it.command ? ` ${it.command}` : "";
+        const head = `[${ts}]${topic}${exit}${cmd}`.trim();
+        const body = (it.log || "").trim();
+        return `${head}\n${body}\n`;
+      };
+
+      let timer = null;
+
+      async function loadSessions() {
+        const server_id = serverIdEl.value.trim();
+        if (!server_id) return alert("server_id required");
+        setStatus("loading sessions...");
+        const res = await fetch(api("sessions", {}));
+        const data = await res.json();
+        sessionSelect.innerHTML = "";
+        (data.items || []).forEach(it => {
+          const sid = it.session_id || it.id || "";
+          if (!sid) return;
+          const opt = document.createElement("option");
+          opt.value = sid;
+          opt.textContent = sid;
+          sessionSelect.appendChild(opt);
+        });
+        setStatus(`sessions: ${(data.items||[]).length}`);
+      }
+
+      async function loadLogsOnce() {
+        const server_id = serverIdEl.value.trim();
+        const session_id = sessionSelect.value;
+        if (!server_id || !session_id) return;
+        const limit = String(parseInt(limitEl.value || "50", 10) || 50);
+        const topic = topicEl.value.trim();
+
+        setStatus("loading logs...");
+        const url = api("logs", { server_id, session_id, limit, ...(topic ? { topic } : {}) });
+        const res = await fetch(url);
+        const data = await res.json();
+        const items = data.items || [];
+        setOut(items.map(fmtLog).join("\n"));
+        setStatus(`logs: ${items.length}`);
+      }
+
+      function startFollow() {
+        if (timer) return;
+        timer = setInterval(loadLogsOnce, 5000);
+        loadLogsOnce();
+      }
+
+      function stopFollow() {
+        if (timer) clearInterval(timer);
+        timer = null;
+      }
+
+      document.getElementById("loadSessions").addEventListener("click", loadSessions);
+      document.getElementById("loadLogs").addEventListener("click", loadLogsOnce);
+      document.getElementById("follow").addEventListener("click", startFollow);
+      document.getElementById("stopFollow").addEventListener("click", stopFollow);
+
+      // Defaults
+      serverIdEl.value = (localStorage.getItem("chronicle.server_id") || "");
+      serverIdEl.addEventListener("change", () => localStorage.setItem("chronicle.server_id", serverIdEl.value.trim()));
+    </script>
+  </body>
+</html>
+

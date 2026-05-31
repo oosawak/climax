@@ -23,6 +23,17 @@
     ./clients/ctm stop <name>
     ./clients/ctm --cleanup <name>
 
+## Admin Web（最終的にWebで見る）
+
+`admin-web/` はセッション/ログの確認用の静的UIです。**チーム運用（認証あり）**は Azure Static Web Apps（SWA）を推奨します。
+
+- デプロイ対象
+  - App: `admin-web/`
+  - API: `api/chronicle-functions-python/`（SWA 統合 Functions）
+- GitHub Actions
+  - `.github/workflows/azure-static-web-apps.yml`
+  - リポジトリ Secrets に `AZURE_STATIC_WEB_APPS_API_TOKEN` を設定（SWA 作成時に発行される token）
+
 ---
 # **序章：混沌の海**
 世界はまだ形を持たず、  

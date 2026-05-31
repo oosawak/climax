@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Climax Chronicle Admin</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <h1>Climax Chronicle Admin</h1>
+        <div class="muted">Sessions / Logs viewer (team-ready via Azure Static Web Apps auth)</div>
+      </div>
+      <div class="header-actions">
+        <button id="btnLogin" class="btn">Login</button>
+        <button id="btnLogout" class="btn btn-ghost">Logout</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Connection</h2>
+        <div class="row">
+          <label class="label">API base</label>
+          <input id="apiBase" class="input mono" placeholder="(default) /api" />
+          <div class="hint">SWA 統合Functionsなら空のままでOK</div>
+        </div>
+        <div class="row">
+          <label class="label">server_id</label>
+          <input id="serverId" class="input mono" placeholder="i9" />
+          <div class="hint">未指定なら hostname 相当を想定（運用で固定推奨）</div>
+        </div>
+        <div class="row">
+          <button id="btnSessions" class="btn">Load sessions</button>
+          <button id="btnHealth" class="btn btn-ghost">Health</button>
+        </div>
+        <pre id="authInfo" class="pre mono small"></pre>
+      </section>
+
+      <section class="card">
+        <h2>Session</h2>
+        <div class="row">
+          <label class="label">session</label>
+          <select id="sessionSelect" class="input mono"></select>
+        </div>
+        <div class="row">
+          <button id="btnSessionGet" class="btn btn-ghost">session/get</button>
+          <button id="btnStatus" class="btn btn-ghost">status</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Logs</h2>
+        <div class="row">
+          <label class="label">topic</label>
+          <input id="topic" class="input mono" placeholder="build" />
+        </div>
+        <div class="row">
+          <label class="label">limit</label>
+          <input id="limit" class="input mono" value="50" />
+        </div>
+        <div class="row">
+          <button id="btnLogs" class="btn">Load logs</button>
+          <button id="btnFollow" class="btn btn-ghost">Follow</button>
+          <button id="btnStop" class="btn btn-ghost">Stop</button>
+        </div>
+        <div class="hint">Follow は 5秒毎に再取得します</div>
+      </section>
+
+      <section class="card full">
+        <div class="row between">
+          <h2>Output</h2>
+          <div id="status" class="muted"></div>
+        </div>
+        <pre id="out" class="pre mono"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
+
