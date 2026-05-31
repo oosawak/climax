@@ -149,6 +149,38 @@ def logs_recent(req: func.HttpRequest) -> func.HttpResponse:
         return _json_response(_debug_error_payload(e), status=500)
 
 
+@app.route(route="logs/backfill_nlp", methods=["POST"])
+def logs_backfill_nlp(req: func.HttpRequest) -> func.HttpResponse:
+    """Backfill nlp payload into existing logs.
+
+    Body: {limit?: int, topic?: str, dry_run?: bool}
+    """
+    try:
+        payload = _parse_json(req)
+        limit = int(payload.get("limit") or 200)
+        topic = payload.get("topic")
+        dry_run = bool(payload.get("dry_run") or False)
+    except Exception as e:
+        return _json_response({"ok": False, "error": str(e)}, status=400)
+
+    try:
+        storage = get_storage()
+        items = storage.list_logs_missing_nlp(limit=limit, topic=topic)
+        updated = 0
+        for it in items:
+            src = str(it.get("command") or it.get("log") or "").strip()
+            if not src:
+                continue
+            nlp = analyze_command(src)
+            it["nlp"] = nlp.to_payload()
+            if not dry_run:
+                storage.upsert_log_record(it)
+            updated += 1
+        return _json_response({"ok": True, "found": len(items), "updated": updated, "dry_run": dry_run})
+    except Exception as e:
+        return _json_response(_debug_error_payload(e), status=500)
+
+
 @app.route(route="log/append", methods=["POST"])
 def log_append(req: func.HttpRequest) -> func.HttpResponse:
     try:

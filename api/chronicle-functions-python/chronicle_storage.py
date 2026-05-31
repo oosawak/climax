@@ -23,6 +23,12 @@ class ChronicleStorage:
     def list_sessions(self) -> list[dict[str, Any]]:
         raise NotImplementedError
 
+    def list_logs_missing_nlp(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
+        raise NotImplementedError
+
+    def upsert_log_record(self, record: dict[str, Any]) -> None:
+        raise NotImplementedError
+
     def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
         raise NotImplementedError
 
@@ -57,8 +63,6 @@ class FileStorage(ChronicleStorage):
             "type": "session",
             **asdict(update),
         }
-        if extra:
-            record.update(extra)
         self._append(record)
         return record
 
@@ -109,6 +113,42 @@ class FileStorage(ChronicleStorage):
                     continue
                 sessions[item["id"]] = item
         return sorted(sessions.values(), key=lambda x: x.get("updated_at", ""), reverse=True)
+
+    def upsert_log_record(self, record: dict[str, Any]) -> None:
+        self._append(record)
+
+    def list_logs_missing_nlp(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
+        if limit < 1:
+            return []
+        if limit > 2000:
+            limit = 2000
+        if not self.path.exists():
+            return []
+
+        items_by_id: dict[str, dict[str, Any]] = {}
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    it = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if it.get("type") != "log":
+                    continue
+                if topic and it.get("topic") != topic:
+                    continue
+                if it.get("nlp") is not None:
+                    continue
+                _id = str(it.get("id") or "")
+                if not _id:
+                    continue
+                items_by_id[_id] = it
+
+        items = list(items_by_id.values())
+        items.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        return items[:limit]
 
     def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
         if limit < 1:
@@ -194,8 +234,6 @@ class CosmosStorage(ChronicleStorage):
             "pk": f"session:{update.server_id}",
             **asdict(update),
         }
-        if extra:
-            record.update(extra)
         self.container.upsert_item(record)
         return record
 
@@ -206,8 +244,33 @@ class CosmosStorage(ChronicleStorage):
             "pk": f"log:{item.server_id}:{item.session_id}",
             **asdict(item),
         }
+        if extra:
+            record.update(extra)
         self.container.upsert_item(record)
         return record
+
+    def upsert_log_record(self, record: dict[str, Any]) -> None:
+        self.container.upsert_item(record)
+
+    def list_logs_missing_nlp(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
+        if limit < 1:
+            return []
+        if limit > 2000:
+            limit = 2000
+
+        where = ["c.type = \"log\"", "NOT IS_DEFINED(c.nlp)"]
+        params: list[dict[str, Any]] = [{"name": "@limit", "value": limit}]
+        if topic:
+            where.append("c.topic = @topic")
+            params.append({"name": "@topic", "value": topic})
+
+        query = (
+            "SELECT TOP @limit * FROM c WHERE "
+            + " AND ".join(where)
+            + " ORDER BY c.timestamp DESC"
+        )
+
+        return list(self.container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
     def list_recent_logs(self, *, limit: int = 200, topic: str | None = None) -> list[dict[str, Any]]:
         if limit < 1:
