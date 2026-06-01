@@ -165,36 +165,24 @@ async function loadSessions() {
 }
 
 async function loadRecentLogs() {
-  const limit = parseInt(limitEl.value || "50", 10) || 50;
-  const topic = topicEl.value.trim();
-  setStatus("recent logs...");
-  const data = await fetchJson(apiUrl("logs/recent", { limit, topic: topic || undefined }));
+  // `/api/logs/recent` が無い構成でも使えるように、sessions一覧を候補として表示する
+  setStatus("sessions (as recent)...");
+  const data = await fetchJson(apiUrl("sessions"));
   const items = data.items || [];
 
-  // unique server/session pairs
-  const seen = new Set();
-  const pairs = [];
+  recentSelectEl.innerHTML = "";
   for (const it of items) {
     const server_id = (it.server_id || "").trim();
-    const session_id = (it.session_id || "").trim();
+    const session_id = (it.session_id || it.id || "").trim();
     if (!server_id || !session_id) continue;
-    const key = server_id + "::" + session_id;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    pairs.push({ server_id, session_id });
-  }
-
-  recentSelectEl.innerHTML = "";
-  for (const p of pairs) {
     const opt = document.createElement("option");
-    opt.value = p.server_id + "::" + p.session_id;
-    opt.textContent = p.server_id + " / " + p.session_id;
+    opt.value = server_id + "::" + session_id;
+    opt.textContent = server_id + " / " + session_id;
     recentSelectEl.appendChild(opt);
   }
 
-  // show raw items in output (for debugging)
-  setOut(items.map(fmtLog).join("\n"));
-  setStatus("recent logs: " + items.length);
+  setOut(JSON.stringify({ ok: true, items }, null, 2));
+  setStatus("sessions: " + items.length);
 }
 
 async function sessionGet() {
