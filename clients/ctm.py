@@ -362,25 +362,18 @@ def do_sessions(out_format: str) -> int:
     return 0
 
 
-def do_session(name: str, out_format: str) -> int:
+def do_backfill(*, limit: int, topic: str | None, dry_run: bool, out_format: str) -> int:
     base_url = _env("CLIMAX_FUNCTIONS_URL")
     code = _env("CLIMAX_FUNCTIONS_CODE")
-    server_id = _env("CLIMAX_SERVER_ID") or _default_server_id()
-    data = _get_json(_build_url(base_url, "/api/session/get", {"server_id": server_id, "session_id": name, "code": code}))
+    url = _build_url(base_url, "/api/logs/backfill_nlp", {"code": code})
+    payload: dict[str, object] = {"limit": max(1, int(limit)), "dry_run": bool(dry_run)}
+    if topic:
+        payload["topic"] = topic
+    data = _post_json(url, payload)
     if out_format == "json":
         sys.stdout.write(json.dumps(data, ensure_ascii=False) + "\n")
         return 0
-    item = data.get("item") if isinstance(data, dict) else None
-    if not isinstance(item, dict):
-        item = data if isinstance(data, dict) else {}
-    sid = item.get("session_id") or name
-    cwd = item.get("cwd") or item.get("directory") or ""
-    updated = item.get("updated_at") or ""
-    sys.stdout.write(f"{sid}\n")
-    if cwd:
-        sys.stdout.write(f"  cwd: {cwd}\n")
-    if updated:
-        sys.stdout.write(f"  updated_at: {updated}\n")
+    sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     return 0
 
 
@@ -639,10 +632,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--format", choices=["json", "text"], default="text")
     parser.add_argument("--follow", action="store_true")
     parser.add_argument("--interval", type=int, default=5)
+    parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
         "subcmd",
         nargs="?",
-        choices=["cmd", "log", "logs", "menu", "session", "sessions", "sync", "status", "doctor", "stop"],
+        choices=["cmd", "log", "logs", "menu", "session", "sessions", "sync", "status", "doctor", "stop", "backfill"],
         default=None,
     )
     parser.add_argument("name", nargs="?")
@@ -672,6 +666,11 @@ def main(argv: list[str]) -> int:
         if not _chronicle_available():
             raise SystemExit("Missing CLIMAX_FUNCTIONS_URL/CLIMAX_FUNCTIONS_CODE")
         return do_sessions(ns.format)
+
+    if ns.subcmd == "backfill":
+        if not _chronicle_available():
+            raise SystemExit("Missing CLIMAX_FUNCTIONS_URL/CLIMAX_FUNCTIONS_CODE")
+        return do_backfill(limit=ns.limit, topic=ns.topic, dry_run=bool(ns.dry_run), out_format=ns.format)
 
     # Name required for most subcommands.
     if ns.subcmd in ("cmd", "log", "logs", "session", "sync", "status", "stop"):
