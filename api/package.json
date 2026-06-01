@@ -1,0 +1,11 @@
+{
+  "name": "climax-swa-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/functions/proxy.js",
+  "dependencies": {
+    "@azure/functions": "^4.6.0"
+  }
+}
+
