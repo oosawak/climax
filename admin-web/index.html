@@ -61,6 +61,13 @@
           <button id="btnSessionGet" class="btn btn-ghost">session/get</button>
           <button id="btnStatus" class="btn btn-ghost">status</button>
         </div>
+
+        <div class="row">
+          <button id="btnCopyCtm" class="btn">Copy: ctm &lt;session&gt;</button>
+          <button id="btnCopyCtmCmd" class="btn btn-ghost">Copy: ctm cmd</button>
+          <button id="btnCopyCtmLog" class="btn btn-ghost">Copy: ctm log</button>
+        </div>
+        <div class="hint">クリックでクリップボードにコピーします（ブラウザから tmux は起動できないので “コピペで起動” 方式）</div>
       </section>
 
       <section class="card">
@@ -78,6 +85,12 @@
           <button id="btnFollow" class="btn btn-ghost">Follow</button>
           <button id="btnStop" class="btn btn-ghost">Stop</button>
         </div>
+
+        <div class="row">
+          <button id="btnBackfillDry" class="btn btn-ghost">Backfill NLP (dry-run)</button>
+          <button id="btnBackfill" class="btn btn-ghost">Backfill NLP</button>
+        </div>
+        <div class="hint">過去ログに nlp(intent/provider) を後付けします（topic/limit を使用）</div>
         <div class="hint">Follow は 5秒毎に再取得します</div>
       </section>
 

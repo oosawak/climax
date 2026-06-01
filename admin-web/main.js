@@ -20,6 +20,23 @@ function setOut(s) {
   outEl.textContent = s;
 }
 
+async function copyToClipboard(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    setStatus("copied");
+  } catch {
+    window.prompt("Copy to clipboard:\n(If prompt shows, copy manually)", value);
+  }
+}
+
+async function postJson(url, body) {
+  return fetchJson(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+}
+
 function getSessionId() {
   const fromSelect = (sessionSelectEl.value || "").trim();
   if (fromSelect) return fromSelect;
@@ -121,8 +138,7 @@ async function loadRecentLogs() {
   }
 
   // show raw items in output (for debugging)
-  setOut(items.map(fmtLog).join("
-"));
+  setOut(items.map(fmtLog).join("\n"));
   setStatus("recent logs: " + items.length);
 }
 
@@ -147,6 +163,19 @@ async function loadLogsOnce() {
   const items = data.items || [];
   setOut(items.map(fmtLog).join("\n"));
   setStatus(`logs: ${items.length}`);
+}
+
+async function backfillNlp(dryRun) {
+  const limit = parseInt(limitEl.value || "200", 10) || 200;
+  const topic = topicEl.value.trim();
+  setStatus(dryRun ? "backfill (dry-run)..." : "backfill...");
+  const data = await postJson(apiUrl("logs/backfill_nlp"), {
+    limit,
+    topic: topic || undefined,
+    dry_run: !!dryRun,
+  });
+  setOut(JSON.stringify(data, null, 2));
+  setStatus("backfill: ok");
 }
 
 function follow() {
@@ -179,6 +208,23 @@ $("btnStatus").addEventListener("click", async () => {
 $("btnLogs").addEventListener("click", loadLogsOnce);
 $("btnFollow").addEventListener("click", follow);
 $("btnStop").addEventListener("click", stopFollow);
+$("btnCopyCtm").addEventListener("click", async () => {
+  const sid = getSessionId();
+  if (!sid) return alert("session_id required");
+  await copyToClipboard(`./clients/ctm ${sid}`);
+});
+$("btnCopyCtmCmd").addEventListener("click", async () => {
+  const sid = getSessionId();
+  if (!sid) return alert("session_id required");
+  await copyToClipboard(`./clients/ctm cmd ${sid}`);
+});
+$("btnCopyCtmLog").addEventListener("click", async () => {
+  const sid = getSessionId();
+  if (!sid) return alert("session_id required");
+  await copyToClipboard(`./clients/ctm log ${sid}`);
+});
+$("btnBackfillDry").addEventListener("click", () => backfillNlp(true));
+$("btnBackfill").addEventListener("click", () => backfillNlp(false));
 
 // init
 recentSelectEl.addEventListener("change", () => {
