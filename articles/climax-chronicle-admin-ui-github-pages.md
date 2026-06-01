@@ -186,12 +186,3 @@ GitHub Pages の管理画面を開いて:
 
 を入れてから、`Recent logs` → `Load logs` で確認します。
 
-## つまずきポイント（よくある）
-
-- `.../api/...` が 404
-  - `API base` が未設定、または Functions URL が間違い
-  - `/api` を付け忘れ → 画面側で自動補完しますが、URLが “ドメインだけ” でないと補完されないことがあります
-- `CORS` エラー
-  - `scripts/az_set_functions_cors.sh` が未実施
-  - `https://<yourname>.github.io` が許可されていない
-
