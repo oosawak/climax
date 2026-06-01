@@ -223,13 +223,20 @@ function stopFollow() {
   setStatus("stopped");
 }
 
-// Auth buttons (SWA)
-$("btnLogin").addEventListener("click", () => {
-  location.href = "/.auth/login/aad";
-});
-$("btnLogout").addEventListener("click", () => {
-  location.href = "/.auth/logout";
-});
+// Auth buttons (SWA)\n// GitHub Pages版ではログインUIを出さないため、存在する場合だけバインドします
+const btnLogin = $("btnLogin");
+if (btnLogin) {
+  btnLogin.addEventListener("click", () => {
+    location.href = "/.auth/login/aad";
+  });
+}
+
+const btnLogout = $("btnLogout");
+if (btnLogout) {
+  btnLogout.addEventListener("click", () => {
+    location.href = "/.auth/logout";
+  });
+}
 
 $("btnSessions").addEventListener("click", loadSessions);
 $("btnHealth").addEventListener("click", health);
