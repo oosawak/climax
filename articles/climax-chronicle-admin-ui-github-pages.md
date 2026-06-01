@@ -73,6 +73,7 @@ GitHub のリポジトリ設定で Pages を有効にします。
 Azure Functions の URL を入れます。
 
 - 推奨: `https://<functionapp>.azurewebsites.net`
+  - GitHub Pages から使う場合は **絶対URL** を入れます（`/api` のような相対パスは不可）
   - 末尾の `/api` は **省略OK**（画面側で自動補完）
 - 明示するなら: `https://<functionapp>.azurewebsites.net/api`
 

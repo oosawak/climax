@@ -636,7 +636,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "subcmd",
         nargs="?",
-        choices=["cmd", "log", "logs", "menu", "session", "sessions", "sync", "status", "doctor", "stop", "backfill"],
+        choices=["cmd", "log", "logs", "menu", "init", "session", "sessions", "sync", "status", "doctor", "stop", "backfill"],
         default=None,
     )
     parser.add_argument("name", nargs="?")
@@ -658,6 +658,25 @@ def main(argv: list[str]) -> int:
         # default: interactive menu (no need to remember subcommands)
         return do_menu(ns, workspace)
 
+    if ns.subcmd == "init":
+        if not ns.name:
+            raise SystemExit("Missing name for: init")
+        name = ns.name
+
+        # Create workspace dir if missing (avoid forcing users to think about storage backends).
+        (workspace / name).mkdir(parents=True, exist_ok=True)
+
+        require_tmux()
+        ensure_sessions(name, workspace, with_cmd=not ns.no_cmd, with_log=not ns.no_log)
+
+        # Best-effort autosync so sessions appear in the admin UI.
+        if _chronicle_available():
+            try:
+                do_sync(name, workspace, with_cmd=not ns.no_cmd, with_log=not ns.no_log)
+            except Exception:
+                pass
+
+        os.execvp("tmux", ["tmux", "attach", "-t", f"codex-{name}"])
 
     if ns.subcmd == "doctor":
         return do_doctor()

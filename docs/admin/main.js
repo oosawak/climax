@@ -190,8 +190,20 @@ async function sessionGet() {
   const session_id = getSessionId();
   if (!server_id || !session_id) return;
   setStatus("session/get...");
+
   const data = await fetchJson(apiUrl("session/get", { server_id, session_id }));
-  setOut(JSON.stringify(data, null, 2));
+  const item = data.item || null;
+
+  const lines = [
+    "session/get result (登録済みセッションの詳細)",
+    "- directory: 作業ディレクトリ（復帰時の基準）",
+    "- panes: tmuxのペイン情報（どのセッション/どのcwd/どんなコマンドか）",
+    "",
+    "raw:",
+    JSON.stringify(data, null, 2),
+  ];
+
+  setOut(lines.join("\n"));
   setStatus("session/get: ok");
 }
 
@@ -204,7 +216,8 @@ async function loadLogsOnce() {
   setStatus("logs...");
   const data = await fetchJson(apiUrl("logs", { server_id, session_id, limit, topic: topic || undefined }));
   const items = data.items || [];
-  setOut(items.map(fmtLog).join("\n"));
+  const rendered = items.map(fmtLog).join("\n");
+  setOut(rendered || "(no logs)");
   setStatus(`logs: ${items.length}`);
 }
 
@@ -233,7 +246,8 @@ function stopFollow() {
   setStatus("stopped");
 }
 
-// Auth buttons (SWA)\n// GitHub Pages版ではログインUIを出さないため、存在する場合だけバインドします
+// Auth buttons (SWA)
+// GitHub Pages版ではログインUIを出さないため、存在する場合だけバインドします
 const btnLogin = $("btnLogin");
 if (btnLogin) {
   btnLogin.addEventListener("click", () => {
@@ -252,8 +266,34 @@ $("btnSessions").addEventListener("click", loadSessions);
 $("btnHealth").addEventListener("click", health);
 $("btnSessionGet").addEventListener("click", sessionGet);
 $("btnStatus").addEventListener("click", async () => {
-  await sessionGet();
-  await loadLogsOnce();
+  const server_id = serverIdEl.value.trim();
+  const session_id = getSessionId();
+  if (!server_id || !session_id) return;
+
+  const topic = topicEl.value.trim();
+  const limit = parseInt(limitEl.value || "50", 10) || 50;
+
+  setStatus("status...");
+
+  const sessionData = await fetchJson(apiUrl("session/get", { server_id, session_id }));
+  const logsData = await fetchJson(apiUrl("logs", { server_id, session_id, limit, topic: topic || undefined }));
+  const items = logsData.items || [];
+  const rendered = items.map(fmtLog).join("\n") || "(no logs)";
+
+  const lines = [
+    "status result (セッション詳細 + 直近ログ)",
+    "",
+    "[session/get]",
+    "- directory: 作業ディレクトリ",
+    "- panes: tmuxのペイン情報",
+    JSON.stringify(sessionData.item || sessionData, null, 2),
+    "",
+    `[logs] count=${items.length} (topic=${topic || "(all)"}, limit=${limit})`,
+    rendered,
+  ];
+
+  setOut(lines.join("\n"));
+  setStatus("status: ok");
 });
 $("btnLogs").addEventListener("click", loadLogsOnce);
 $("btnFollow").addEventListener("click", follow);
