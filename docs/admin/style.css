@@ -1,0 +1,63 @@
+:root {
+  color-scheme: light dark;
+}
+body {
+  margin: 16px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.35;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.small { font-size: 12px; }
+.muted { opacity: .75; }
+.hint { opacity: .75; font-size: 12px; margin-top: 4px; }
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.header h1 { margin: 0; font-size: 18px; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.card {
+  border: 1px solid rgba(127,127,127,.35);
+  border-radius: 12px;
+  padding: 12px;
+}
+.card h2 { margin: 0 0 10px 0; font-size: 14px; }
+.card.full { grid-column: 1 / -1; }
+.row { display: grid; gap: 6px; margin-bottom: 10px; }
+.row.between { display: flex; justify-content: space-between; align-items: baseline; }
+.label { font-size: 12px; opacity: .8; }
+.input {
+  padding: 7px 8px;
+  border: 1px solid rgba(127,127,127,.35);
+  border-radius: 10px;
+  background: transparent;
+}
+.btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(127,127,127,.35);
+  background: rgba(127,127,127,.12);
+  cursor: pointer;
+}
+.btn:hover { background: rgba(127,127,127,.18); }
+.btn.btn-ghost { background: transparent; }
+.header-actions { display: flex; gap: 8px; }
+.pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+@media (max-width: 980px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
