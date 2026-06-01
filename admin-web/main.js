@@ -65,12 +65,34 @@ function fmtLog(it) {
 }
 
 async function fetchJson(url, opts = {}) {
-  const res = await fetch(url, { ...opts, headers: { "Accept": "application/json", ...(opts.headers || {}) } });
+  const res = await fetch(url, {
+    ...opts,
+    headers: { "Accept": "application/json", ...(opts.headers || {}) },
+  });
+
+  // Helpful errors for SWA auth / missing API
+  const contentType = (res.headers.get("content-type") || "").toLowerCase();
+  const looksJson = contentType.includes("application/json");
+
+  if (res.status === 404) {
+    throw new Error("404 Not Found: " + url + " (API not deployed yet, or API base is wrong)");
+  }
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("Unauthorized: " + url + " (please login)");
+  }
+
   const txt = await res.text();
+
+  if (!looksJson) {
+    const hint = res.redirected && res.url.includes("/.auth/") ? " (auth redirect)" : "";
+    throw new Error("Non-JSON response (" + res.status + ")" + hint + ": " + txt.slice(0, 200));
+  }
+
   try {
     return JSON.parse(txt);
   } catch {
-    throw new Error(`Non-JSON response (${res.status}): ${txt.slice(0, 400)}`);
+    throw new Error("Bad JSON (" + res.status + "): " + txt.slice(0, 200));
   }
 }
 
