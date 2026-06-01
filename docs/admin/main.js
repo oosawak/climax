@@ -46,8 +46,30 @@ function getSessionId() {
 
 function apiUrl(path, params = {}) {
   const baseRaw = (apiBaseEl.value || "").trim();
-  const base = (baseRaw || "/api").replace(/\/+$/, "");
-  const u = new URL(base + "/" + path.replace(/^\/+/, ""), location.origin);
+  const isGitHubPages = location.hostname.endsWith("github.io");
+
+  if (!baseRaw) {
+    throw new Error("API base required (set Function App URL)");
+  }
+
+  if (isGitHubPages && baseRaw.startsWith("/")) {
+    throw new Error("On GitHub Pages, API base must be an absolute URL (https://<functionapp>.azurewebsites.net/api)");
+  }
+
+  let baseInput = baseRaw.replace(/\/+$/, "");
+
+  // Convenience: if user pasted just https://<app>.azurewebsites.net , append /api
+  try {
+    const parsed = new URL(baseInput);
+    const host = (parsed.hostname || "").toLowerCase();
+    const p = (parsed.pathname || "").replace(/\/+$/, "");
+    if (host.endsWith("azurewebsites.net") && (!p || p === "/")) {
+      baseInput = baseInput + "/api";
+    }
+  } catch {
+    // ignore
+  }
+  const u = new URL(baseInput + "/" + path.replace(/^\/+/, ""), location.origin);
 
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null || v === "") return;
@@ -284,6 +306,12 @@ apiCodeEl.addEventListener("change", () => localStorage.setItem("chronicle.api_c
 loadAuth();
 
 // Auto-load something useful on open
-loadRecentLogs();
+try {
+  // Only auto-load when API base is configured
+  if ((apiBaseEl.value || "").trim()) loadRecentLogs();
+  else setStatus("Set API base (Function App URL) then click Recent logs");
+} catch (e) {
+  setStatus(String(e && e.message ? e.message : e));
+}
 
 
