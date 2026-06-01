@@ -241,3 +241,7 @@ apiBaseEl.addEventListener("change", () => localStorage.setItem("chronicle.api_b
 
 loadAuth();
 
+// Auto-load something useful on open
+loadRecentLogs();
+
+
