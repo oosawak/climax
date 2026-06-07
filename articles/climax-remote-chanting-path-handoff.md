@@ -6,7 +6,7 @@ topics: ["ai", "tailscale", "tmux", "Android"]
 published: false
 ---
 
-![Climax](Climax.png)
+![Climax](../Climax.png)
 
 # 第１章 〜ノートPCを持ち歩く時代は終わった 〜
 ##  はじめに
