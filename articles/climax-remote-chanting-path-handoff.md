@@ -1,3 +1,11 @@
+---
+title: "【この春はじめたこと】スマホとLinux/Macで実現する「手のひらAI駆動ライブコーディング」"
+emoji: "📱"
+type: "tech"
+topics: ["ai", "tailscale", "tmux", "Android"]
+published: false
+---
+
 ![Climax](Climax.png)
 
 # 第１章 〜ノートPCを持ち歩く時代は終わった 〜
