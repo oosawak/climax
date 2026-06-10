@@ -9,6 +9,7 @@ Usage:
 Writes/updates `clients/.env` with:
   - CLIMAX_FUNCTIONS_URL
   - CLIMAX_FUNCTIONS_CODE (default function key)
+  - installs client shims into `~/.local/bin`
 
 Defaults:
   RG=rg-climax
@@ -79,6 +80,9 @@ tmp="$(mktemp)"
 
 mv -f "$tmp" "$ENV_FILE"
 
+"$(cd "$(dirname "$0")" && pwd)/install_clients_bin.sh"
+
 echo "Wrote: $ENV_FILE" >&2
 echo "Next:" >&2
 echo "  set -a; . clients/.env; set +a" >&2
+echo "  ctm / ctmcmd / cj are now available from ~/.local/bin (ensure it is on PATH)" >&2

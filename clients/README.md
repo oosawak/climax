@@ -45,7 +45,7 @@ python clients/climax_preprocess_client.py --text "ログまとめて"
 Alias of `climax-nlp` (shorter command).
 
 ```bash
-./clients/cj "unity-devの続きやって"
+cj "unity-devの続きやって"
 ```
 
 ## `climax-nlp`
@@ -59,7 +59,7 @@ export CLIMAX_FUNCTIONS_URL="https://func-api-eedplxgcbbmra.azurewebsites.net"
 export CLIMAX_FUNCTIONS_CODE="$(az functionapp keys list -g rg-climax -n func-api-eedplxgcbbmra --query functionKeys.default -o tsv)"
 
 # writes ~/.climax/latest_final_prompt.txt
-./clients/climax-nlp "unity-devの続きやって"
+climax-nlp "unity-devの続きやって"
 
 # in Codex TUI, paste nothing; just read it:
 cat ~/.climax/latest_final_prompt.txt
@@ -82,12 +82,12 @@ cp clients/.env.example clients/.env
 Edit `clients/.env` and set:
 
 - `CLIMAX_FUNCTIONS_CODE="<配布された function key>"`
-- (optional) `CLIMAX_TOPIC="build"`  # default topic for `ctmcmd.py`
+- (optional) `CLIMAX_TOPIC="build"`  # default topic for `ctmcmd`
 
 ### 2) Generate the latest prompt (no copy/paste)
 
 ```bash
-./clients/cj "unity-devの続きやって"
+cj "unity-devの続きやって"
 ```
 
 This prints the path to the generated prompt file (default: `~/.climax/latest_final_prompt.txt`).
@@ -95,10 +95,10 @@ This prints the path to the generated prompt file (default: `~/.climax/latest_fi
 ### 3) Use it
 
 - In Codex TUI: `cat ~/.climax/latest_final_prompt.txt`
-- Or launch Codex with the prompt: `./clients/climax-codex "unity-devの続きやって"`
+- Or launch Codex with the prompt: `climax-codex "unity-devの続きやって"`
 
 Tip:
-- If you use `./clients/ctm cmd <name>` / `./clients/ctm log <name>`, env vars from `clients/.env` are injected automatically on attach.
+- If you use `ctm cmd <name>` / `ctm log <name>`, env vars from `clients/.env` are injected automatically on attach.
 
 
 ## Ops (daily workflow)
@@ -111,10 +111,20 @@ This is the minimal workflow for session + log management.
 ./clients/setup_clients_env.sh
 ```
 
+This writes `clients/.env` and installs the command shims into `~/.local/bin`:
+- `ctm`
+- `ctmcmd`
+- `cj`
+- `climax-nlp`
+- `climax-codex`
+- `climax-send`
+
+Make sure `~/.local/bin` is on `PATH`.
+
 ### 1) Start working (no subcommand memorization)
 
 ```bash
-./clients/ctm
+ctm
 ```
 
 In the menu:
@@ -127,7 +137,7 @@ In the menu:
 Inside the `cmd-<name>` session:
 
 ```bash
-./clients/ctmcmd.py -- <your command>
+ctmcmd -- <your command>
 ```
 
 Tip:
@@ -136,14 +146,14 @@ Tip:
 ### 3) Check status / logs quickly
 
 ```bash
-./clients/ctm status <name> --limit 5
-./clients/ctm logs <name> --limit 20
+ctm status <name> --limit 5
+ctm logs <name> --limit 20
 ```
 
 ### 4) Troubleshoot
 
 ```bash
-./clients/ctm doctor
+ctm doctor
 ```
 
 
@@ -156,13 +166,13 @@ Launch Codex with a generated `final_prompt` (Japanese input -> Azure Functions 
 ```bash
 
 # starts: codex sh "<final_prompt>"
-./clients/climax-codex "unity-devの続きやって"
+climax-codex "unity-devの続きやって"
 ```
 
 If you prefer a different Codex subcommand:
 
 ```bash
-CODEX_SUBCOMMAND=exec ./clients/climax-codex "ログまとめて"
+CODEX_SUBCOMMAND=exec climax-codex "ログまとめて"
 ```
 
 ## `climax-send` (tmux)
@@ -175,7 +185,7 @@ Inject the generated `final_prompt` into the currently active tmux pane (and pre
 
 # In one pane: run Codex TUI
 # In another pane: send an instruction into the active pane
-./clients/climax-send "unity-devの続きやって"
+climax-send "unity-devの続きやって"
 ```
 
 Tip:
@@ -200,6 +210,7 @@ Start (or reuse) tmux sessions per workspace directory.
 - In `ctm menu`, choose "Change session" to switch sessions without restarting `ctm`.
 - `ctm menu` remembers your last action in `~/.climax/last_action.txt` (press Enter to repeat it).
 - `ctm` remembers your last selected session in `~/.climax/last_session.txt` (used as the default in the menu/selection).
+- In the picker, `0` means “choose from Workspace directories”.
 - `ctm <name>`: attach to `codex-<name>` (best-effort autosync to Chronicle)
 - `ctm cmd <name>`: attach to `cmd-<name>` (env injected)
 - `ctm log <name>`: attach to `log-<name>` and show latest logs
@@ -213,7 +224,7 @@ Start (or reuse) tmux sessions per workspace directory.
 - `ctm stop <name>`: kill helper sessions (use `--all` to include codex)
 
 Tip:
-- Newly created `cmd-<name>` / `log-<name>` sessions auto-source `~/Workspace/climax/clients/.env` (so `ctmcmd.py` can call Azure without manual `set -a`).
+- Newly created `cmd-<name>` / `log-<name>` sessions auto-source `~/Workspace/climax/clients/.env` (so `ctmcmd` can call Azure without manual `set -a`).
 - `ctm cmd <name>` / `ctm log <name>` also injects env on attach (works for existing sessions).
 - `ctm log <name>` auto-runs `ctm logs <name>` on attach (shows latest logs immediately).
 
@@ -227,35 +238,35 @@ Usage:
 
 ```bash
 # choose from ~/Workspace (number prompt)
-./clients/ctm
+ctm
 
 # start/attach by name (開始/復帰)
-./clients/ctm <name>
+ctm <name>
 
 # attach to cmd or log sessions
-./clients/ctm cmd <name>
-./clients/ctm log <name>
+ctm cmd <name>
+ctm log <name>
 
 # interactive (no need to remember subcommands)
-./clients/ctm  # interactive menu (default)
-./clients/ctm menu
-./clients/ctm log <name> --topic build --limit 20
-./clients/ctm log <name> --topic build --limit 50 --follow --interval 5
+ctm  # interactive menu (default)
+ctm menu
+ctm log <name> --topic build --limit 20
+ctm log <name> --topic build --limit 50 --follow --interval 5
 
 # fetch latest logs from Chronicle (Cosmos)
-./clients/ctm logs <name>
-./clients/ctm logs <name> --topic build --limit 5
+ctm logs <name>
+ctm logs <name> --topic build --limit 5
 
 # stop helper sessions (cleanup)
-./clients/ctm stop <name>
-./clients/ctm --all stop <name>
-./clients/ctm stop --all <name>
+ctm stop <name>
+ctm --all stop <name>
+ctm stop --all <name>
 
 # auto-clean cmd/log after you exit Codex
-./clients/ctm --cleanup <name>
+ctm --cleanup <name>
 
 # custom workspace root
-./clients/ctm --workspace ~/Workspace <name>
+ctm --workspace ~/Workspace <name>
 ```
 
 This matches the workflow where you keep Codex, command execution, and log monitoring in separate tmux sessions.
@@ -281,21 +292,21 @@ Examples:
 CLIMAX_SERVER_ID=ubuntu-01 ./clients/climax-cmdlog --session-id unity-dev --topic test -- cargo test
 ```
 
-## `ctmcmd.py`
+## `ctmcmd`
 
 Python implementation of command-unit logging (more reliable than editing bash scripts in some environments).
 
 ```bash
 # recommended
-./clients/ctmcmd.py --topic build -- echo hello
-./clients/ctmcmd.py -- echo hello  # uses CLIMAX_TOPIC or 'default'
+ctmcmd --topic build -- echo hello
+ctmcmd -- echo hello  # uses CLIMAX_TOPIC or 'default'
 ```
 
 ## `ctmcmd`
 
 Convenience wrapper for command-unit logging from inside tmux.
 
-- Implementation: `clients/ctmcmd.py` (the `clients/ctmcmd` script is a shim).
+- Implementation: `clients/ctmcmd` (the `clients/ctmcmd` script is a shim).
 
 - Infers `session_id` from the current tmux session name (`cmd-<name>` -> `<name>`).
 - Sends stdout/stderr + metadata to `POST /api/log/append` via `climax-cmdlog`.
@@ -303,9 +314,9 @@ Convenience wrapper for command-unit logging from inside tmux.
 Example:
 
 ```bash
-# inside: ./clients/ctm cmd unity-dev
-./clients/ctmcmd build -- cargo build
-./clients/ctmcmd test  -- cargo test
+# inside: ctm cmd unity-dev
+ctmcmd build -- cargo build
+ctmcmd test  -- cargo test
 ```
 
 ## Setup (no copy-paste)

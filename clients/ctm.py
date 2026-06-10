@@ -197,7 +197,6 @@ def _write_last_format(fmt: str) -> None:
 
 
 def pick_session_from_chronicle_or_workspace(workspace: Path) -> str:
-    default = _read_last_session()
     if _chronicle_available():
         try:
             items = fetch_sessions()
@@ -214,8 +213,11 @@ def pick_session_from_chronicle_or_workspace(workspace: Path) -> str:
                 cwd = (it.get("directory") or it.get("cwd") or "").strip()
                 suffix = f"  {cwd}" if cwd else ""
                 print(f"{idx:2d}) {sid}{suffix}", file=sys.stderr)
+            print(" 0) Select from Workspace directories", file=sys.stderr)
             if names:
-                sel = input("Enter number: ").strip()
+                sel = input("Enter number (0=workspace): ").strip()
+                if sel == "0":
+                    return pick_workspace_dir(workspace)
                 if sel.isdigit():
                     n = int(sel)
                     if 1 <= n <= len(names):
@@ -238,6 +240,14 @@ def ensure_sessions(name: str, workspace: Path, *, with_cmd: bool, with_log: boo
 
     if not has_session(codex_sess):
         run_tmux(["new-session", "-d", "-s", codex_sess, "-c", str(workdir), "codex sh"])
+        # inject autolog hook into codex session (best-effort, detached send-keys)
+        run_tmux([
+            "send-keys",
+            "-t",
+            codex_sess,
+            f"set -a; [ -f {CLIENTS_DIR}/.env ] && . {CLIENTS_DIR}/.env; set +a; source {CLIENTS_DIR}/ctm_hook.sh",
+            "Enter",
+        ], check=False)
 
     if with_cmd and not has_session(cmd_sess):
         run_tmux(
@@ -359,6 +369,52 @@ def do_sessions(out_format: str) -> int:
             line += f"  {cwd}"
         if line:
             sys.stdout.write(line + "\n")
+    return 0
+
+
+def do_session(name: str, out_format: str) -> int:
+    base_url = _env("CLIMAX_FUNCTIONS_URL")
+    code = _env("CLIMAX_FUNCTIONS_CODE")
+    server_id = _env("CLIMAX_SERVER_ID") or _default_server_id()
+    data = _get_json(_build_url(base_url, "/api/session/get", {"server_id": server_id, "session_id": name, "code": code}))
+    if out_format == "json":
+        sys.stdout.write(json.dumps(data, ensure_ascii=False) + "\n")
+        return 0
+
+    item = data.get("item") if isinstance(data, dict) else None
+    if not isinstance(item, dict):
+        item = data if isinstance(data, dict) else {}
+
+    sys.stdout.write("session/get result (登録済みセッションの詳細)\n")
+    sys.stdout.write(f"  session_id: {name}\n")
+    directory = item.get("directory") or item.get("cwd") or ""
+    updated = item.get("updated_at") or ""
+    if directory:
+        sys.stdout.write(f"  directory: {directory}\n")
+    if updated:
+        sys.stdout.write(f"  updated_at: {updated}\n")
+    panes = item.get("panes") if isinstance(item.get("panes"), list) else []
+    if panes:
+        sys.stdout.write(f"  panes: {len(panes)}\n")
+        for pane in panes:
+            if not isinstance(pane, dict):
+                continue
+            sess = pane.get("session") or pane.get("pane_session") or ""
+            idx = pane.get("pane")
+            cwd = pane.get("cwd") or ""
+            cmd = pane.get("command") or ""
+            line = "    -"
+            if sess:
+                line += f" session={sess}"
+            if idx is not None:
+                line += f" pane={idx}"
+            if cwd:
+                line += f" cwd={cwd}"
+            if cmd:
+                line += f" command={cmd}"
+            sys.stdout.write(line + "\n")
+    sys.stdout.write("\nraw:\n")
+    sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
     return 0
 
 

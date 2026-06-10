@@ -11,6 +11,7 @@ __pycache__/
 *.pyd
 .venv/
 venv/
+docs_notuse/
 
 # Local env files (never commit secrets)
 .env
@@ -39,3 +40,5 @@ clients/gtm
 
 # Local screenshots
 xxx.png
+scripts/
+.aider*
