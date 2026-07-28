@@ -1,3 +1,11 @@
+---
+title: "Climax Control Layer 技術仕様書 v1.0"
+emoji: "⚙️"
+type: "tech"
+topics: ["codex", "nodejs", "mongodb", "zellij", "zenn"]
+published: false
+---
+
 了解、Koushirou。  
 では **Climax Control Layer（CCL）正式仕様書 v1.0** を、  
 **技術者にそのまま渡して開発を開始できるレベル**でまとめる。
